@@ -4,6 +4,7 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FlatController;
 use App\Http\Controllers\GovernorateCityController;
 use App\Http\Controllers\LandlordController;
+use App\Http\Controllers\StripeController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\Admin;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('register',[UserController::class,'register']);
 Route::post('login',[UserController::class,'login']);
 Route::post('logout',[UserController::class,'logout'])->middleware('auth:sanctum');
+
+Route::post('/stripe/webhook', [StripeController::class, 'handleWebhook']);
 // #################################################################################
 
 
@@ -50,22 +53,30 @@ Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
 
 // للمؤجر فقط
 
+Route::get('/payment-success-test', function (Illuminate\Http\Request $request) {
+    return response()->json([
+        'success' => true,
+        'message' => 'Stripe redirected you here successfully!',
+        'session_id' => $request->query('session_id')
+    ]);
+});
+
 Route::middleware(['auth:sanctum', Landlord::class])->group(function () {
-    Route::post('landlord/addflat',[LandlordController::class,'addFlat']);
-    Route::post('landlord/removeflat',[LandlordController::class,'removeFlat']);
-    Route::post('landlord/{flat_id}/updateflat',[LandlordController::class,'updateFlatDetails']);
-    Route::get('landlord/getflats',[LandlordController::class,'getFlats']);
-    Route::get('landlord/getPendingRents',[LandlordController::class,'pendingReservations']);
-    Route::put('landlord/responsToRequsets',[LandlordController::class,'respondToReservation']);
-    Route::get('landlord/getAllReservations',[LandlordController::class,'getAllReservations']);
+        Route::post('landlord/addflat',[LandlordController::class,'addFlat']);
+        Route::post('landlord/removeflat',[LandlordController::class,'removeFlat']);
+        Route::post('landlord/{flat_id}/updateflat',[LandlordController::class,'updateFlatDetails']);
+        Route::get('landlord/getflats',[LandlordController::class,'getFlats']);
+        Route::get('landlord/getPendingRents',[LandlordController::class,'pendingReservations']);
+        Route::put('landlord/responsToRequsets',[LandlordController::class,'respondToReservation']);
+        Route::get('landlord/getAllReservations',[LandlordController::class,'getAllReservations']);
     });
 
-
     Route::middleware(['auth:sanctum',Tenant::class])->group(function (){
+        Route::post('tenant/buy',[TenantController::class,'buyFlat'])->middleware('auth:sanctum');
         Route::post('tenant/rent',[TenantController::class,'reserveFlat'])->middleware('auth:sanctum');
+        Route::post('/payment/stripe/checkout', [StripeController::class, 'createCheckoutSession']);
         Route::put('tenant/rent',[TenantController::class,'updateReservation'])->middleware('auth:sanctum');
         Route::delete('tenant/rent',[TenantController::class,'cancelReservation'])->middleware('auth:sanctum');
         Route::post('tenant/rateFlat',[TenantController::class,'rateFlat'])->middleware('auth:sanctum');
         Route::get('tenant/myReservation',[TenantController::class,'getMyReservation']);
-        Route::post('tenant/buy',[TenantController::class,'buyFlat'])->middleware('auth:sanctum');
 });

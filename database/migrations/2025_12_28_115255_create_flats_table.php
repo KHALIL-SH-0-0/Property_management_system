@@ -16,11 +16,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('governorate_id')->constrained()->cascadeOnDelete();
             $table->foreignId('city_id')->constrained()->cascadeOnDelete();
-            $table->string('details');
-            $table->float('price');
+            $table->enum('category', ['flat', 'villa', 'land', 'shop', 'office']);
+            $table->text('details');
+            $table->string('location');
+            $table->bigInteger('price')->nullable();
             $table->bigInteger('rent_price')->nullable();
-            $table->boolean('is_for_rent')->default(true);
-            $table->boolean('is_for_sale')->default(false);
+            $table->enum('status', ['available', 'rented', 'sold'])->default('available');
             $table->float('rate')->default('0');
             $table->string('flat_image');
             $table->timestamps();

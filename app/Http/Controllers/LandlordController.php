@@ -15,7 +15,9 @@ class LandlordController extends Controller
     public function addFlat (Request $request){
 
         $request->validate([
-            'price'=>'required|integer',
+            'price' => 'required_without:rent_price|numeric|min:0',
+            'rent_price' => 'required_without:price|numeric|min:0',
+            'location' => 'required:string',
             'details'=>'required|string',
             'city_id'=>'required|exists:cities,id',
             'governorate_id'=>'required|exists:governorates,id',
@@ -122,7 +124,8 @@ public function pendingReservations() {
             'flat_user.end_date',
             'users.first_name as renter_first_name',
             'users.last_name as renter_last_name',
-            'flats.id as flat_id'
+            'flats.id as flat_id',
+            'flat_user.type as request_type'
         )
         ->get();
 
@@ -138,15 +141,16 @@ public function pendingReservations() {
 public function respondToReservation(Request $request){
     $request->validate([
         'id' => 'required|exists:flat_user,id',
-        'status' => 'required|in:Accepted,Rejected,Pending',
+        'status' => 'required|in:Accepted,Rejected',
     ]);
 
     $landlord = auth()->user();
-    if ($landlord->verified_status!='approved'){
+    if ($landlord->verified_status != 'approved'){
         return response()->json([
-            'message'=>'Your Accout has not yet been Approved'
-            ]);
+            'message' => 'Your Account has not yet been Approved'
+        ], 403);
     }
+
     $reservation = DB::table('flat_user')
         ->join('flats', 'flat_user.flat_id', '=', 'flats.id')
         ->where('flat_user.id', $request->id)
@@ -157,59 +161,36 @@ public function respondToReservation(Request $request){
     if (!$reservation) {
         return response()->json(['message' => 'هذا الحجز غير موجود أو لا يخصك'], 403);
     }
-    $flat = Flat::find($reservation->flat_id);
-    if ($request->status == 'Accepted') {
-        $tenant = User::find($reservation->user_id);
-        $totalAmount = $flat->price;
 
-        // التحقق من رصيد المستأجر
-        if ($tenant->balance < $totalAmount) {
-            return response()->json(['message' => 'رصيد المستأجر غير كافٍ لإتمام العملية'], 400);
-        }
-
-        try {
-            DB::transaction(function () use ($request, $tenant, $landlord, $flat, $totalAmount, $reservation) {
-                $commission = $totalAmount * 0.02;
-                $netAmount = $totalAmount - $commission;
-
-                $tenant->decrement('balance', $totalAmount);
-                $landlord->increment('balance', $netAmount);
-
-                $finalStatus = ($reservation->type == 'buy') ? 'Sold' : 'Accepted';
-                DB::table('flat_user')->where('id', $reservation->id)->update([
-                    'status' => $finalStatus
-                ]);
-
-                $newTransaction = \App\Models\Transaction::create([
-                    'user_id' => $tenant->id,
-                    'flat_id' => $flat->id,
-                    'amount' => $totalAmount,
-                    'commission' => $commission,
-                    'type' => ($reservation->type == 'buy') ? 'purchase' : 'rental',
-                    'status' => 'completed',
-                ]);
-
-                if ($request->hasFile('contract_pdf')) {
-                    $path = $request->file('contract_pdf')->store('contracts', 'public');
-                    $newTransaction->update(['contract_pdf' => $path]);
-                }
-            });
-
-            return response()->json(['message' => 'تم قبول الطلب وإتمام المعاملة المالية بنجاح'], 200);
-
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'فشلت العملية المالية: ' . $e->getMessage()], 500);
-        }
+    if ($reservation->status !== 'Pending') {
+        return response()->json(['message' => 'تم معالجة هذا الطلب مسبقاً، لا يمكن تعديله الآن'], 400);
     }
+
+    //* Accepted
+
+    if ($request->status == 'Accepted') {
+        DB::table('flat_user')->where('id', $reservation->id)->update([
+            'status' => 'Awaiting_Payment'
+        ]);
+
+    //! Notification Require
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم قبول الطلب بنجاح، وتحويل حالته إلى (بانتظار الدفع)، وتم إشعار المستأجر لإتمام العملية.'
+        ], 200);
+    }
+
+    //* Rejected
 
     DB::table('flat_user')
         ->where('id', $request->id)
-        ->update(['status' => $request->status]);
+        ->update(['status' => 'Rejected']);
 
     return response()->json([
-        'message' => 'تم رفض الطلب بنجاح'
+        'success' => true,
+        'message' => 'تم رفض طلب الحجز بنجاح، وتظل الشقة متاحة للآخرين.'
     ], 200);
-
 }
 
 

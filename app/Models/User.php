@@ -33,8 +33,7 @@ class User extends Authenticatable
     }
 
 
-    public function favorites()
-    {
+    public function favorites(){
         return $this->belongsToMany(Flat::class, 'favorites')
             ->withTimestamps()
             ->withPivot('id');
@@ -46,13 +45,17 @@ class User extends Authenticatable
     }
 
 
-    public function flatOrders(){
-        return $this->belongsToMany(Flat::class, 'flat_user')
-            ->withPivot('start_date', 'end_date', 'status', 'rate')
-            ->withTimestamps();
-    }
+    // public function flatOrders(){
+    //     return $this->belongsToMany(Flat::class, 'flat_user')
+    //         ->withPivot('start_date', 'end_date', 'status', 'rate')
+    //         ->withTimestamps();
+    // }
 
     public function transactions() {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function bookings(){
+        return $this->hasMany(FlatUser::class);
     }
 }

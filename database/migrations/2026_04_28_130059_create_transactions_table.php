@@ -15,11 +15,14 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('flat_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('flat_user_id')->nullable()->constrained('flat_user')->onDelete('cascade');
+            $table->string('type')->default('payment');
             $table->bigInteger('amount');
             $table->bigInteger('commission')->default(0);
-            $table->string('type')->default('payment');
             $table->string('payment_method')->default('wallet'); // 'wallet', 'stripe', 'manual'
             $table->string('stripe_payment_id')->nullable();
+            $table->string('stripe_session_id')->nullable();
+            $table->json('payment_details')->nullable();
             $table->enum('status', ['pending', 'completed', 'rejected'])->default('pending');
             $table->string('contract_pdf')->nullable();
             $table->timestamps();

@@ -23,6 +23,8 @@ return new class extends Migration
             $table->enum('verified_status',['pending','approved','rejected'])->default('pending');
             $table->enum('role',['admin','tenant','landlord']);
             $table->string('password');
+            $table->string('location')->nullable();
+            $table->string('stripe_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

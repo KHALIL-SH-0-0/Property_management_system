@@ -16,12 +16,9 @@ class Flat extends Model{
     public function governorate(){
         return $this-> belongsTo(Governorate::class);
     }
-    public function users(){
-        return $this-> belongsTo(User::class);
+    public function owner(){
+        return $this-> belongsTo(User::class, 'user_id');
     }
-    // public function users(){
-    //     return $this-> belongsToMany(User::class,'flat_user');
-    // }
 
     public function favorite(){
         return $this->belongsToMany(User::class, 'favorites')
@@ -33,11 +30,17 @@ class Flat extends Model{
         return $this->belongsToMany(User::class, 'flat_user')
               ->withPivot('start_date', 'end_date', 'status', 'rate')
               ->withTimestamps();
-}
-    public function reviews()
-    {
+    }
+    public function reviews(){
         return $this->hasMany(FlatReview::class);
     }
 
+    public function bookings() {
+        return $this->hasMany(FlatUser::class, 'flat_id');
+    }
+
+    public function transactions() {
+        return $this->hasMany(Transaction::class, 'flat_id');
+    }
 }
 

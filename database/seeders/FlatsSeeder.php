@@ -24,7 +24,8 @@ class FlatsSeeder extends Seeder
                 'details' => 'شقة راقية في دمشق',
                 'price' => 170000,
                 'rate' => 4.7,
-                'flat_image' => 'flats/damascus2.jpg'
+                'flat_image' => 'flats/damascus2.jpg',
+                'location' => 'DX123Cdk345AQx'
             ],
             [
                 'user_id' => 2,
@@ -33,7 +34,8 @@ class FlatsSeeder extends Seeder
                 'details' => 'شقة في داريا',
                 'price' => 130000,
                 'rate' => 4.1,
-                'flat_image' => 'flats/darya1.jpg'
+                'flat_image' => 'flats/darya1.jpg',
+                'location' => 'DX12fk2l34jx'
             ],
             [
                 'user_id' => 3,
@@ -42,7 +44,8 @@ class FlatsSeeder extends Seeder
                 'details' => 'شقة في منبج',
                 'price' => 90000,
                 'rate' => 3.9,
-                'flat_image' => 'flats/manbij1.jpg'
+                'flat_image' => 'flats/manbij1.jpg',
+                'location' => 'kdf903jcn82kzio'
             ],
         ];
 
@@ -60,6 +63,7 @@ class FlatsSeeder extends Seeder
                 'price' => $flatData['price'],
                 'rate' => $flatData['rate'],
                 'flat_image' => $flatData['flat_image'],
+                'location' => $flatData['location'],
             ]);
 
 

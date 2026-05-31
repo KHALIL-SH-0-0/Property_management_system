@@ -33,10 +33,12 @@ class FlatController extends Controller
         return response()->json($flats, 200);
     }
 
-    public function getFlatDetails($id)
-    {
-        $flat = Flat::with('reviews')->findOrFail($id);
-
+    public function getFlatDetails($id){
+        $flat = Flat::with(['reviews', 'owner'])
+              ->whereDoesntHave('bookings', function($query) {
+              $query->where('status', 'Sold');
+              })
+        ->get();
         //  متوسط التقييم
         $averageRating = $flat->reviews()->avg('rating');
 
@@ -49,6 +51,7 @@ class FlatController extends Controller
             'city_id' => $flat->city_id,
             'governorate_id' => $flat->governorate_id,
             'flat_image' => $flat->flat_image,
+            'owner_name' => $flat->owner->first_name,
             'owner_id' => $flat->user_id,
             'average_rating' => round($averageRating, 2), // التقييم النهائي
             'reviews_count' => $flat->reviews()->count(), // عدد التقييمات

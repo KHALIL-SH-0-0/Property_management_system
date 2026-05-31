@@ -15,9 +15,9 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date');
             $table->integer('rate')->default(1);
-            $table->enum('status',['Accepted','Pending','Rejected','Sold'])->default('Pending');
+            $table->enum('status',['Accepted','Pending','Rejected','Sold','Awaiting_Payment'])->default('Pending');
             $table->timestamps();
-});
+    });
 
     }
     public function down(): void{
